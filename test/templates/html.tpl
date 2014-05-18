@@ -1,6 +1,6 @@
 <div class="container">
 	<header>
-		<h1>Main header</h1>
+		<h1>Testing only HTML</h1>
 	</header>
 
 	<div class="content">

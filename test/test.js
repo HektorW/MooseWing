@@ -9,10 +9,75 @@ function runTests() {
   getTemplate('variables', function(template) {
 
     output(template, {
-      header: 'Data-header',
-      paragraph: 'Data-paragraph'
+      header: 'Variable header',
+      paragraph: 'Variable paragraph'
     });
 
+  });
+
+  getTemplate('paths', function(template) {
+
+    output(template, {
+      header: 'Article unikum',
+      article: {
+        content: 'Bacon lorem majonäsum',
+        date: '2014-05-18',
+        author: {
+          firstname: 'Hektor',
+          lastname: 'Wallin'
+        }
+      }
+    });    
+
+  });
+
+  getTemplate('if', function(template) {
+    output(template, {
+      flag: true
+    });
+    output(template, {
+      flag: false
+    });
+  });
+
+  getTemplate('unless', function(template) {
+    output(template, {
+      flag: true
+    });
+    output(template, {
+      flag: false
+    });
+  });
+
+
+  getTemplate('each', function(template) {
+    output(template, {
+      items: [{
+        name: 'Name 1'
+      }, {
+        name: 'Name 2'
+      }]
+    });
+  });
+
+  getTemplate('nestedeach', function(template) {
+    output(template, {
+      items: [{
+        name: 'Sub 1',
+        subitems: [{
+          name: 'Sub 1.1'
+        }, {
+          name: 'Sub 1.2'
+        }]
+      }, {
+        name: 'Sub 2',
+        subitems: [{
+          name: 'Sub 2.1'
+        }, {
+          name: 'Sub 2.2'
+        }]
+      }]
+    });
   });
 }
 
@@ -59,7 +124,7 @@ function getTemplate(name, callback) {
       callback(xhr.responseText);
     };
 
-    xhr.open('get', url);
+    xhr.open('get', url, false);
     xhr.send();
   }
   // node
