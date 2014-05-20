@@ -1,4 +1,4 @@
-;(function() {
+(function() {
   //    Variables
   //  *  this
   //  *  paths
@@ -19,10 +19,10 @@
   //    (Utils)
 
   var TYPE_HTML = 'type_html',
-      TYPE_VARIABLE = 'type_variable',
-      TYPE_ELSE = 'type_else',
-      TYPE_HELPER_OPEN = 'type_helper_open',
-      TYPE_HELPER_CLOSE = 'type_helper_close';
+    TYPE_VARIABLE = 'type_variable',
+    TYPE_ELSE = 'type_else',
+    TYPE_HELPER_OPEN = 'type_helper_open',
+    TYPE_HELPER_CLOSE = 'type_helper_close';
 
 
   var MooseWing = {
@@ -90,7 +90,7 @@
 
       var args = [f].concat(MooseWing.getPartArguments(scope, parts[start]));
 
-      var res = helper.apply(ctx, args)
+      var res = helper.apply(ctx, args);
       if (res === null && elseindex) {
         res = MooseWing.renderPart(scope, parts, elseindex, end);
       }
@@ -111,7 +111,7 @@
         var type = parts[i].type;
         if (type === TYPE_HELPER_OPEN) {
           ++depth;
-        } else if (type === TYPE_HELPER_CLOSE ) {
+        } else if (type === TYPE_HELPER_CLOSE) {
           if (depth-- === 0) {
             return i;
           }
@@ -120,13 +120,17 @@
       return -1;
     },
 
-    getElseIndex: function (parts, start, end) {
+    getElseIndex: function(parts, start, end) {
       var depth = 0;
       for (var i = start, len = Math.min(end || Infinity, parts.length); i < len; i++) {
         var type = parts[i].type;
         switch (type) {
-          case TYPE_HELPER_OPEN: ++depth; break;
-          case TYPE_HELPER_CLOSE: --depth; break;
+          case TYPE_HELPER_OPEN:
+            ++depth;
+            break;
+          case TYPE_HELPER_CLOSE:
+            --depth;
+            break;
           case TYPE_ELSE:
             if (depth === 0) {
               return i;
@@ -154,9 +158,9 @@
         }
 
         var match = res[0],
-            open = res[1],
-            close = res[3],
-            inside = res[2];
+          open = res[1],
+          close = res[3],
+          inside = res[2];
 
         var args = inside.split(' ');
         var action = args[0][0];
@@ -176,7 +180,7 @@
           case '/':
             part.type = TYPE_HELPER_CLOSE;
             part.name = args[0].substr(1);
-             break;
+            break;
           case '>':
             // partials
             break;
@@ -190,8 +194,8 @@
               }
             } else {
               part.type = TYPE_HELPER_OPEN;
-            part.name = args[0];
-            part.args = args;
+              part.name = args[0];
+              part.args = args;
             }
             break;
         }
@@ -225,7 +229,7 @@
 
       var ctx = scope[i];
       if (!ctx) {
-        throw 'Could not get ' + selector + ' from data passed in' ;
+        throw 'Could not get ' + selector + ' from data passed in';
       }
 
 
@@ -236,7 +240,7 @@
           continue;
 
         if (!ctx) {
-          throw 'Could not get ' + selector + ' from data passed in' ;
+          throw 'Could not get ' + selector + ' from data passed in';
         }
 
         ctx = ctx[parts[i]];
@@ -248,57 +252,110 @@
 
     registerHelper: function(name, helper) {
       MooseWing.helpers[name] = helper;
+    },
+
+    Util: {
+      each: function(collection, callback) {
+        var i, len;
+        if (!collection) {
+          return;
+        }
+
+        if (collection.length === +collection.length) {
+          for (i = 0, len = collection.length; i < len; i++) {
+            callback(collection[i], i);
+          }
+        } else {
+          for (i in collection) {
+            if (collection.hasOwnProperty(i)) {
+              callback(collection[i], i);
+            }
+          }
+        }
+      },
+
+      extend: function(to, from, deep) {
+        MooseWing.Util.each(from, function(value, key) {
+          if (deep && typeof value === 'object' && value !== null) {
+            to[key] = to[key] || {};
+            MooseWing.Util.extend(to[key], value);
+          } else {
+            to[key] = value;
+          }
+        });
+        return to;
+      },
+
+      isArray: function(collection) {
+        return Object.prototype.toString.call(collection) === '[object Array]';
+      }
     }
-
   };
-
 
 
 
   //////////////////////////
   // Add built-in helpers //
   //////////////////////////
+  // If
   MooseWing.registerHelper('if', function(fn, flag) {
     if (flag) {
       return fn.call(this);
     }
     return null;
   });
+
+  // Unless
   MooseWing.registerHelper('unless', function(fn, flag) {
     if (!flag) {
       return fn.call(this);
     }
     return null;
   });
+
+  // Each
   MooseWing.registerHelper('each', function(fn, collection) {
     if (!collection) {
       return null;
     }
 
-    var res = '', i;
-    if (collection.length === +collection.length) {
-      for (i = 0; i < collection.length; i++) {
-        res += fn.call(collection[i]);
+    var res = '';
+    var isArray = MooseWing.Util.isArray(collection);
+    var first = true;
+    MooseWing.Util.each(collection, function(item, index) {
+      var data = MooseWing.Util.extend({}, item);
+      if (first) {
+        data['@first'] = true;
+        first = false;
       }
-    } else {
-      for (i in collection) {
-        if (!collection.hasOwnProperty(i)) continue;
-        res += fn.call(collection[i]);
+      if (isArray) {
+        data['@index'] = index;
+        if (index === collection.length - 1) {
+          data['@last'] = true;
+        }
+      } else {
+        data['@key'] = index;
       }
-    }
+      res += fn.call(data);
+    });
 
     return res;
   });
 
+  // With
+  MooseWing.registerHelper('with', function(fn, ctx) {
+    return fn.call(ctx);
+  });
 
 
 
-
-
-  if (typeof define !== 'undefined' && define.amd)
-    define([], function() { return MooseWing; });
-  else if (typeof module !== 'undefined' && module.exports)
+  if (typeof define !== 'undefined' && define.amd) {
+    define([], function() {
+      return MooseWing;
+    });
+  } else if (typeof module !== 'undefined' && module.exports) {
     module.exports = MooseWing;
-  else
+  } else {
     window.MooseWing = MooseWing;
+  }
 }());
